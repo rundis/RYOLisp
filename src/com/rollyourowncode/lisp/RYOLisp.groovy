@@ -133,47 +133,24 @@ public class RYOLisp {
         if (!tokens) throw new Exception("unexpected EOF while reading")
         if (tokens.size() == 1) return atom(tokens[0])
 
-        // fold left
-        def ast = tokens.inject([root: null, curr: null]) {ast, token ->
+        def ast = tokens.tail().inject(new Node(null, [])) {node, token ->
             switch (token) {
                 case "(":
-                    if (!ast.root) {
-                        def curr = new Node(null, [])
-                        return [root: curr, curr: curr]
-                    }
-                    return [root: ast.root, curr: ast.curr.appendNode(null, [])]
+                    return node.appendNode(null, [])
                 case ")":
-                    ast.curr = ast.curr.parent() ?: ast.root
-                    return ast
+                    return node.parent() ?: node
                 default:
-                    ast.curr.value = ast.curr.value() + atom(token)
-                    return ast
-
+                    node.value = node.value() + atom(token)
+                    return node
             }
         }
-
-        nestedLists(ast.root)
-
-        /*def token = tokens.remove(0) //tokens.pop() //[0]
-        switch (token) {
-            case '(':
-                def L = []
-                while (tokens.first() != ')') {
-                    L << treeify(tokens)
-                }
-                tokens.remove(0)  // pop off ')'
-                return L
-            case ')':
-                throw new Exception("unexpected )")
-            default:
-                return atom(token)
-        } */
+        return nestedLists(ast)
     }
 
     def nestedLists(node) {
-       node.value().collect{
-           it instanceof Node ? nestedLists(it) : it
-       }
+        node.value().collect {
+            it instanceof Node ? nestedLists(it) : it
+        }
     }
 
     def atom(String token) {
