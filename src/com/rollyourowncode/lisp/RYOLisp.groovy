@@ -22,16 +22,16 @@ public class RYOLisp {
     RYOLisp() {
         outerEnv = addGlobals(new Env())
     }
-    
+
     def repl() {
-        while ( true ) println(evaluate(parse(read())))
+        while (true) println(evaluate(parse(read())))
     }
 
     def read() {
         print "repl >> "
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in))
         def source = br.readLine()
-        if ( source == "exit" ) exit(0)
+        if (source == "exit") exit(0)
         return source
     }
 
@@ -129,21 +129,51 @@ public class RYOLisp {
         return treeify(tokenize(s))
     }
 
-    def treeify(Deque<String> tokens) {
+    def treeify(tokens) {
         if (!tokens) throw new Exception("unexpected EOF while reading")
-        def token = tokens.pop() //[0]
-        if (token == '(') {
-            def L = []
-            while (tokens.first != ')') {
-                L << treeify(tokens)
+        if (tokens.size() == 1) return atom(tokens[0])
+
+        // fold left
+        def ast = tokens.inject([root: null, curr: null]) {ast, token ->
+            switch (token) {
+                case "(":
+                    if (!ast.root) {
+                        def curr = new Node(null, [])
+                        return [root: curr, curr: curr]
+                    }
+                    return [root: ast.root, curr: ast.curr.appendNode(null, [])]
+                case ")":
+                    ast.curr = ast.curr.parent() ?: ast.root
+                    return ast
+                default:
+                    ast.curr.value = ast.curr.value() + atom(token)
+                    return ast
+
             }
-            tokens.pop() // pop off ')'
-            return L
-        } else if (token == ')') {
-            throw new Exception("unexpected )")
-        } else {
-            return atom(token)
         }
+
+        nestedLists(ast.root)
+
+        /*def token = tokens.remove(0) //tokens.pop() //[0]
+        switch (token) {
+            case '(':
+                def L = []
+                while (tokens.first() != ')') {
+                    L << treeify(tokens)
+                }
+                tokens.remove(0)  // pop off ')'
+                return L
+            case ')':
+                throw new Exception("unexpected )")
+            default:
+                return atom(token)
+        } */
+    }
+
+    def nestedLists(node) {
+       node.value().collect{
+           it instanceof Node ? nestedLists(it) : it
+       }
     }
 
     def atom(String token) {
@@ -157,7 +187,9 @@ public class RYOLisp {
         return token
     }
 
-    ArrayDeque<String> tokenize(s) {
-        return s.replace('(', ' ( ').replace(')', ' ) ').split()
+    def tokenize(s) {
+        return s.replace('(', ' ( ').replace(')', ' ) ').split() as List
     }
+
+
 }

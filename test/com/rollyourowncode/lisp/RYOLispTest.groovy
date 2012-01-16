@@ -9,26 +9,14 @@ class RYOLispTest extends GroovyTestCase {
 
     void testTokenize() {
         def tokens = ryoLisp.tokenize("(+ 1 1)")
+        assert ['(', '+', 1, 1, ')'].join("") == tokens.join("")
         assert tokens.size() == 5
-        assert tokens.pop() == "("
-        assert tokens.pop() == "+"
-        assert tokens.pop() == "1"
-        assert tokens.pop() == "1"
-        assert tokens.pop() == ")"
     }
 
     void testTokenizeProgram() {
         def tokens = ryoLisp.tokenize("(set! x*2 (* x 2))")
-        assert tokens.size() == 9
-        assert tokens.pop() == "("
-        assert tokens.pop() == "set!"
-        assert tokens.pop() == "x*2"
-        assert tokens.pop() == "("
-        assert tokens.pop() == "*"
-        assert tokens.pop() == "x"
-        assert tokens.pop() == "2"
-        assert tokens.pop() == ")"
-        assert tokens.pop() == ")"
+        assert ['(', 'set!', 'x*2', '(', '*', 'x', 2, ')', ')'].join("") == tokens.join("")
+
     }
 
     void testAtomConvertsNumbersToNumbers() {
