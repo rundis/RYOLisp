@@ -103,20 +103,21 @@ public class RYOLisp {
     def addGlobals(Env env) {
         def bool = {it ? 1 : 0}
         def oper = {a, b, operator -> Eval.me("$a $operator $b")}
+        def booloper = oper >> bool
         env.putAll([
-                "+":        {Object[] x -> x.sum() },
+                "+":        {Object[] x -> x.sum()},
                 "-":        oper.rcurry("-"),
                 "*":        oper.rcurry("*"),
-                ">":        oper.rcurry(">") >> bool,
-                "<":        oper.rcurry("<") >> bool,
-                "<=":       oper.rcurry("<=") >> bool,
-                ">=":       oper.rcurry(">") >> bool,
+                ">":        booloper.rcurry(">"),
+                "<":        booloper.rcurry("<"),
+                "<=":       booloper.rcurry("<="),
+                ">=":       booloper.rcurry(">"),
                 "not":      {!it},
                 "car":      {it.head()},
                 "cdr":      {it.tail()},
                 "list":     {Object[] x -> [* x]},
-                "list?":    {it instanceof List} >> bool,
-                "equal?":   {a, b -> a == b} >> bool,
+                "list?":    booloper.rcurry("List", "instanceof"),
+                "equal?":   {a, b -> a == b} >> bool, // not playing ball with eval, hence no curry
                 "cons":     {x, y -> [x] + y }])
         return env
     }
